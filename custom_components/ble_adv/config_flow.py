@@ -676,7 +676,7 @@ class BleAdvConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_open_issue(self, _: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Open issue Step."""
         self._return_step_after_diag = "open_issue"
-        ph = {"url": "https://github.com/NicoIIT/ha-ble-adv/issues/new?template=discovery.yml"}
+        ph = {"url": "https://github.com/sb1905/ha-ble-adv/issues"}
         return self.async_show_menu(step_id="open_issue", menu_options=["diag"], description_placeholders=ph)
 
     async def async_step_confirm_yes(self, _: dict[str, Any] | None = None) -> ConfigFlowResult:

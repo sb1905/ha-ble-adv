@@ -2,11 +2,11 @@
 
 [![GitHub release](https://img.shields.io/github/v/release/sb1905/ha-ble-adv.svg)](https://github.com/sb1905/ha-ble-adv/releases/)
 
-> **This is my own edition** of [NicoIIT/ha-ble-adv](https://github.com/NicoIIT/ha-ble-adv), extended with support for lamps controlled by the **SmartLight Pro** app. All credit for the integration itself goes to [@NicoIIT](https://github.com/NicoIIT). Please do not report problems with this edition to the original project.
+BLE ADV Ceiling Fan / Lamps – SmartLight Edition is a Home Assistant custom integration that controls ceiling fans and lamps from various brands using _non standard_ **_BLE Raw Advertising_** as communication method. It includes support for lamps controlled by the **SmartLight Pro** app. Standard BLE GATT devices are not supported and are out of scope.
 
-Home Assistant Custom Integration to control Ceiling Fan / Lamp Devices from various Brands using _non standard_ **_BLE Raw Advertising_** as communication method. Please note this component will **_never_** support standard BLE GATT protocol as it is not its purpose.
+The integration **is not limited to any specific device type or brand**: it recognizes and reproduces the communication protocols used by various [Phone Apps](#supported-ceiling-fans--lamps-protocols) and Remotes.
 
-This integration **is not limited to any specific device type or brand**: it is able to recognize and reproduce the communication protocols used by various [Phone Apps](#supported-ceiling-fans--lamps-protocols) and Remotes.
+Bug reports and support requests: [github.com/sb1905/ha-ble-adv/issues](https://github.com/sb1905/ha-ble-adv/issues).
 
 ## Features
 * Discover your device configuration simply by listening to an already paired controller (Android Phone App, Physical Remote)
@@ -44,16 +44,16 @@ The Protocols supported are the ones used by the following Android Phone Apps (a
 * [GMIMA](https://www.jasonghost.com/lampSmartGmima/) (not available on Play Store)
 * [SmartHomeLight](https://wosk.top/zd.html) (not available on Play Store)
 * [Dudugu](https://app.dudugu.com/duduguapp/app/) (not available on Play Store. FAN only Device. No support for direct Pairing)
-* [eWeLink](https://play.google.com/store/apps/details?id=com.coolkit) ONLY BLE ADV devices such as [VACZON](https://github.com/NicoIIT/ha-ble-adv/issues/201) !!! Will **_NEVER_** work for Standard BLE GATT devices (99% of eWeLink Devices) so ensure the Device is [BLE ADV Controlled](https://github.com/NicoIIT/ha-ble-adv/wiki/How-to-know-if-my-Physical-Remote-is-using-BLE-Advertising-to-control-my-device) BEFORE opening an issue.
+* [eWeLink](https://play.google.com/store/apps/details?id=com.coolkit) ONLY BLE ADV devices such as VACZON !!! Will **_NEVER_** work for Standard BLE GATT devices (99% of eWeLink Devices) so ensure the Device is [BLE ADV Controlled](https://github.com/NicoIIT/ha-ble-adv/wiki/How-to-know-if-my-Physical-Remote-is-using-BLE-Advertising-to-control-my-device) BEFORE opening an issue.
 * [Hxlight](https://play.google.com/store/apps/details?id=com.dxc.delight) / [LED-Spots](https://play.google.com/store/apps/details?id=com.hmwin.bt.broadcast) (On / Off, Brightness, Color Temperature and Night Mode. No support for direct Pairing)
 * Other (Legacy), removed app from play store: 'FanLamp', 'ControlSwitch', 'Lamp Smart Pro - Soft Lighting / Smart Lighting'
 
-If the protocols of your application are not supported yet you can request for their support [here](https://github.com/NicoIIT/ha-ble-adv/issues/new?template=new_app.yml) (original project).
+If the protocols of your application are not supported yet you can request for their support [here](https://github.com/sb1905/ha-ble-adv/issues).
 
 ## Supported Physical Remote
 There are lots of different Physical Remote so it is impossible to know if a Physical Remote is supported without testing it. Some of them are using the same protocols than the Phone Apps, others are using their own protocol, or even RF or IR...
 
-If your remote is not recognized by the integration then you can check if it could be supported and request for its support, see [How To](https://github.com/NicoIIT/ha-ble-adv/wiki/How-to-know-if-my-Physical-Remote-is-using-BLE-Advertising-to-control-my-device).
+If your remote is not recognized by the integration then you can check if it could be supported, see [How To](https://github.com/NicoIIT/ha-ble-adv/wiki/How-to-know-if-my-Physical-Remote-is-using-BLE-Advertising-to-control-my-device), and request for its support [here](https://github.com/sb1905/ha-ble-adv/issues).
 
 ## Installing the component
 Download and install directly through [HACS (Home Assistant Community Store)](https://www.hacs.xyz/) following the [my-link](https://my.home-assistant.io/) link:
@@ -78,17 +78,6 @@ The main steps of the configuration flow are the following:
 * **Definition**: Define the **Entities** to be created (Main Light, Second Light, Fan, ...) and their characteristics (RGB / Cold White Warm / Binary / Fan Speed / Min Brightness...), add a supplementary remote controller or modify the technical parameters. This step can be modified afterwards by reconfiguring the integration (see [Wiki](https://github.com/NicoIIT/ha-ble-adv/wiki/Configuration-Guide)).
 * **Finalization**: Specify the name of the Device and save your changes.
 
-
-## Future Developments
-Future developments are tracked in [github feature requests](https://github.com/NicoIIT/ha-ble-adv/issues?q=is%3Aissue%20state%3Aopen%20label%3Aenhancement), do not hesitate to vote for them if you need them giving it a :thumbsup:, or open new ones!
-
-## More Info on Wiki
-* [How it is working](https://github.com/NicoIIT/ha-ble-adv/wiki/How-it-is-working)
-* [Configuration Guide](https://github.com/NicoIIT/ha-ble-adv/wiki/Configuration-Guide)
-* [Troubleshooting Guide](https://github.com/NicoIIT/ha-ble-adv/wiki/Troubleshooting-Guide)
-* [Advanced Customization Guide](https://github.com/NicoIIT/ha-ble-adv/wiki/Customization-Guide)
-* [Contributing Guide](CONTRIBUTING.md)
-
 ## Credits
-* **Original integration:** [@NicoIIT](https://github.com/NicoIIT) – [ha-ble-adv](https://github.com/NicoIIT/ha-ble-adv), MIT licensed. This edition is based on its v2.2.14 release.
-* **SmartLight Pro support:** Sukru Batur ([@sb1905](https://github.com/sb1905)), with support from Claude.
+* Based on [ha-ble-adv](https://github.com/NicoIIT/ha-ble-adv) by NicoIIT (MIT licence).
+* SmartLight Pro support and this edition: Sukru Batur ([@sb1905](https://github.com/sb1905)), with support from Claude.
