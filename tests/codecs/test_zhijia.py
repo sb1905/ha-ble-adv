@@ -1,3 +1,4 @@
+# ruff: noqa: S101
 """Zhi Jia Unit Tests."""
 
 import pytest
@@ -15,6 +16,7 @@ from . import _TestEncoderBase, _TestEncoderFull, _TestEncoderFullAll
         ("zhiguang_v0", 0xFF, "F9.08.49.B2.CE.2C.91.3F.6D.94.0A.F2.FB.39.25.67"),
         ("zhiguang_v1", 0xFF, "F9.08.49.E6.29.AF.D4.17.38.AC.51.33.11.82.8D.42.10.76.F8.C4.78.FC.C8.46.23.8E"),
         ("zhiguang_v2", 0xFF, "22.9D.8D.36.4B.E9.0F.DA.D5.40.79.CA.69.A3.BF.5B.95.D5.D4.4A.5F.85.F6.9C.A9.19"),
+        ("zhijia_v2_sl", 0xFF, "22.58.12.DB.1F.9C.61.BA.CC.6A.88.DC.BF.A1.33.9C.72.54.F0.3D.A7.66.B0.75.A9.19"),
     ],
 )
 class TestEncoderZhijia(_TestEncoderBase):
@@ -514,3 +516,49 @@ class TestEncoderZhijiaNoReverse(_TestEncoderFull):
 )
 class TestEncoderZhijiaFullAll(_TestEncoderFullAll):
     """Zhi Jia Encoder / Decoder Full ALL tests."""
+
+
+@pytest.mark.parametrize(
+    _TestEncoderFull.PARAM_NAMES,
+    [
+        # BRIGHTNESS 100%, as sent by the SmartLight Pro app
+        (
+            "zhijia_v2_sl",
+            "02.01.01.1B.FF.22.58.E0.C5.17.97.6E.5A.C4.62.84.D8.B7.A9.3B.93.72.50.F8.3D.A7.66.B0.75.A9.19",
+            "cmd: 0xAD, param: 0x00, args: [251,3,232]",
+            "id: 0x00F3A500, index: 255, tx: 87, seed: 0x0000",
+            "light_0: ['br'] / {'sub_type': 'cww', 'br': 1.0}",
+        ),
+        # COLOR TEMPERATURE full warm, as sent by the SmartLight Pro app
+        (
+            "zhijia_v2_sl",
+            "02.01.01.1B.FF.22.58.16.D1.E1.62.91.44.32.94.78.2D.41.5F.CD.6C.8D.A5.0E.3D.A7.66.B0.75.A9.19",
+            "cmd: 0xAE, param: 0x00, args: [251,0,0]",
+            "id: 0x00F3A500, index: 255, tx: 94, seed: 0x0000",
+            "light_0: ['ct'] / {'sub_type': 'cww', 'ct': 1.0}",
+        ),
+    ],
+)
+class TestEncoderZhijiaSmartLightFull(_TestEncoderFull):
+    """Zhi Jia V2 SmartLight Pro variant full tests."""
+
+
+def test_zhijia_v2_sl_rotating_header() -> None:
+    """The app rotates the second header byte; all variants must decode to the same device."""
+    from ble_adv.codecs.models import BleAdvAdvertisement  # noqa: PLC0415
+
+    from . import CODECS  # noqa: PLC0415
+
+    codec = CODECS["zhijia_v2_sl"]
+    for raw in (
+        "02.01.01.1B.FF.22.B8.88.A2.7E.B9.C2.82.CD.5E.B3.CF.2E.B9.6B.00.A1.C8.7A.FA.2A.B4.E7.D4.A9.19",
+        "02.01.01.1B.FF.22.38.AB.89.ED.2E.01.06.B3.0A.BF.CE.FD.66.02.51.2A.AD.D0.48.96.77.F8.E3.A9.19",
+        "02.01.01.1B.FF.22.D8.8E.BE.7A.07.5F.C8.44.C8.83.2C.9A.88.AC.30.F9.C0.AC.8F.1B.A5.AF.42.A9.19",
+    ):
+        enc_cmd, conf = codec.decode_adv(BleAdvAdvertisement.FromRaw(bytes.fromhex(raw.replace(".", ""))))
+        assert enc_cmd is not None
+        assert conf is not None
+        assert conf.id == 0xF3A500
+    # Standard Zhi Jia V2 packets are left to the zhijia_v2 codec
+    std = "02.01.1A.1B.FF.22.9D.9D.C9.69.F9.2F.CA.C7.69.52.DA.7B.B3.36.6E.87.AF.C4.4A.5F.85.F6.9C.A9.19"
+    assert codec.decode_adv(BleAdvAdvertisement.FromRaw(bytes.fromhex(std.replace(".", ""))))[0] is None

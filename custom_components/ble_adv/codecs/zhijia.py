@@ -240,6 +240,50 @@ class ZhijiaEncoderV2(ZhijiaEncoderV1):
         return bytearray(self.pivot(oarray))
 
 
+class ZhijiaEncoderV2Variant(ZhijiaEncoderV2):
+    """Zhi Jia V2 variant with a rotating second whitening seed (SmartLight Pro app).
+
+    The second header byte selects the inner whitening seed and the check bit of the key byte.
+    The seed is not derivable from the header byte, so it is recovered once per header byte
+    from the trailing zero padding and cached.
+    """
+
+    _len = 25  # header byte + 24 bytes, after the 0x22 header
+
+    def __init__(self, mac: list[int], header_byte: int, seed: int, key_xor: int) -> None:
+        super().__init__(mac)
+        self._var_header_byte = header_byte
+        self._var_seed = seed
+        self._var_key_xor = key_xor
+        self._seed_cache: dict[int, int | None] = {header_byte: seed}
+
+    def _find_seed(self, header_byte: int, buf1: bytearray) -> int | None:
+        if header_byte in self._seed_cache:
+            return self._seed_cache[header_byte]
+        found = next((s for s in range(0x80) if (whiten(buf1[:-2], s) + buf1[-2:])[-7:] == bytes(7)), None)
+        self._seed_cache[header_byte] = found
+        return found
+
+    def decrypt(self, buffer: bytearray) -> bytearray | None:
+        """Decrypt / unwhiten an incoming raw buffer into a readable buffer."""
+        header_byte = buffer[0]
+        if header_byte == 0x9D:  # Standard Zhi Jia V2, handled by the base codec
+            return None
+        buf1 = whiten(buffer[1:], 0x6F)
+        if (seed := self._find_seed(header_byte, buf1)) is None:
+            return None
+        buf2 = whiten(buf1[:-2], seed) + buf1[-2:]
+        if not self.is_eq_buf(bytes([0x00] * 7), buf2[-7:], "Zero padding"):
+            return None
+        return buf2[:-7]
+
+    def encrypt(self, buffer: bytearray) -> bytearray:
+        """Encrypt / whiten a readable buffer."""
+        buf1 = bytearray(buffer) + bytearray([0x00] * 7)
+        buf1[1] ^= self._var_key_xor
+        return bytearray([self._var_header_byte]) + whiten(whiten(buf1[:-2], self._var_seed) + buf1[-2:], 0x6F)
+
+
 class ZhijiaEncoderRemote(ZhijiaEncoderV1):
     """Zhi Jia Remote encoder."""
 
@@ -364,6 +408,17 @@ TRANS_V2 = [
 ]
 
 
+TRANS_V2_SL = [
+    *TRANS_COMMON_V1_V2,
+    # App sends brightness both as 0-251 in arg0 and as 0-1000 in arg1 (high) / arg2 (low); the lamp needs both.
+    Trans(CTLightCmd().act(ATTR_BR), EncCmd(0xAD)).copy(ATTR_BR, "arg0", 251).split_copy(ATTR_BR, ["arg2", "arg1"], 1000.0),
+    Trans(CTLightCmd().act(ATTR_CT), EncCmd(0xAE)).copy(ATTR_CT, "arg0", 251),
+    # App ON / OFF buttons, reverse only
+    Trans(LightCmd().act(ATTR_ON, True), EncCmd(0xA0)).no_direct(),
+    Trans(LightCmd().act(ATTR_ON, False), EncCmd(0xA1)).no_direct(),
+]
+
+
 TRANS_V2_FL = TranslatorSet(
     [
         *TRANS_COMMON_V1_V2,
@@ -389,6 +444,8 @@ CODECS = [
     ZhijiaEncoderV0().id("zhijia_v0").header([0xF9, 0x08, 0x49]).prefix([0x08, 0x80, 0x98]).ble(0x1A, 0xFF).add_translators(TRANS_V0),
     ZhijiaEncoderV1([0x19, 0x01, 0x10]).id("zhijia_v1").header([0xF9, 0x08, 0x49]).prefix([0x55, 0x08, 0x80, 0x98]).ble(0x1A, 0xFF).add_translators(TRANS_V1),
     ZhijiaEncoderV2([0x19, 0x01, 0x10]).id("zhijia_v2").header([0x22, 0x9D]).ble(0x1A, 0xFF).add_translators(TRANS_V2).add_translator_set("fl", TRANS_V2_FL),
+    # SmartLight Pro Android App (Zhi Jia V2 variant)
+    ZhijiaEncoderV2Variant([0x19, 0x01, 0x10], 0x58, 0x4A, 0x01).id("zhijia_v2_sl").header([0x22]).ble(0x01, 0xFF).add_translators(TRANS_V2_SL),
     # Zhi Guang standard Android App
     ZhijiaEncoderV0().id("zhiguang_v0").header([0xF9, 0x08, 0x49]).prefix([0x33, 0xAA, 0x55]).ble(0x1A, 0xFF).add_translators(TRANS_V0),
     ZhijiaEncoderV1([0x20, 0x03, 0x05]).id("zhiguang_v1").header([0xF9, 0x08, 0x49]).prefix([0xA0, 0xC0, 0x04, 0x04]).ble(0x1A, 0xFF).add_translators(TRANS_V1),
