@@ -1,7 +1,8 @@
-# <img width="64" height="64" alt="icon@2x" src="https://github.com/user-attachments/assets/29025370-fa25-41a1-ad18-5ca567dbf120" />  Home Assistant BLE ADV Ceiling Fan / Lamps
+# <img width="64" height="64" alt="icon@2x" src="https://github.com/user-attachments/assets/29025370-fa25-41a1-ad18-5ca567dbf120" />  BLE ADV Ceiling Fan / Lamps – SmartLight Edition
 
-[![GitHub release](https://img.shields.io/github/v/release/NicoIIT/ha-ble-adv.svg)](https://github.com/NicoIIT/ha-ble-adv/releases/)
-![Usage](https://img.shields.io/badge/dynamic/json?color=9932CC&logo=home-assistant&label=usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.ble_adv.total)
+[![GitHub release](https://img.shields.io/github/v/release/sb1905/ha-ble-adv.svg)](https://github.com/sb1905/ha-ble-adv/releases/)
+
+> **This is my own edition** of [NicoIIT/ha-ble-adv](https://github.com/NicoIIT/ha-ble-adv), extended with support for lamps controlled by the **SmartLight Pro** app. All credit for the integration itself goes to [@NicoIIT](https://github.com/NicoIIT). Please do not report problems with this edition to the original project.
 
 Home Assistant Custom Integration to control Ceiling Fan / Lamp Devices from various Brands using _non standard_ **_BLE Raw Advertising_** as communication method. Please note this component will **_never_** support standard BLE GATT protocol as it is not its purpose.
 
@@ -32,6 +33,7 @@ The Protocols supported are the ones used by the following Android Phone Apps (a
 * [Vmax smart](https://play.google.com/store/apps/details?id=com.jingyuan.vmax_smart)
 * [Zhi Jia](https://play.google.com/store/apps/details?id=com.cxw.cxwblelight)
 * [Zhi Guang](https://play.google.com/store/apps/details?id=com.cxw.zhiguang) (2 different versions: one based on zhimei, one based on zhijia)
+* [SmartLight Pro](https://play.google.com/store/apps/details?id=com.miaoAI.zhiguangflutter) (On / Off, Brightness, Color Temperature) — added in this edition
 * [Zhi Mei Deng Kong](http://mihuan.iotworkshop.com/zhiguang/) (not available on Play Store)
 * [Mantra Lighting](https://play.google.com/store/apps/details?id=com.newenergy.baolilan) (Models Coin, Groenland. No support for direct Pairing)
 * [Smart Light / Argrace Smart](https://apkpure.com/argrace-smart/ai.argrace.oem) (No RGB, Only the control by device, not the Master Control, PARTIAL support for some remotes) (not available on Play Store anymore, seems abandoned)
@@ -46,7 +48,7 @@ The Protocols supported are the ones used by the following Android Phone Apps (a
 * [Hxlight](https://play.google.com/store/apps/details?id=com.dxc.delight) / [LED-Spots](https://play.google.com/store/apps/details?id=com.hmwin.bt.broadcast) (On / Off, Brightness, Color Temperature and Night Mode. No support for direct Pairing)
 * Other (Legacy), removed app from play store: 'FanLamp', 'ControlSwitch', 'Lamp Smart Pro - Soft Lighting / Smart Lighting'
 
-If the protocols of your application are not supported yet you can request for their support [here](https://github.com/NicoIIT/ha-ble-adv/issues/new?template=new_app.yml).
+If the protocols of your application are not supported yet you can request for their support [here](https://github.com/NicoIIT/ha-ble-adv/issues/new?template=new_app.yml) (original project).
 
 ## Supported Physical Remote
 There are lots of different Physical Remote so it is impossible to know if a Physical Remote is supported without testing it. Some of them are using the same protocols than the Phone Apps, others are using their own protocol, or even RF or IR...
@@ -56,7 +58,7 @@ If your remote is not recognized by the integration then you can check if it cou
 ## Installing the component
 Download and install directly through [HACS (Home Assistant Community Store)](https://www.hacs.xyz/) following the [my-link](https://my.home-assistant.io/) link:
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=NicoIIT&repository=ha-ble-adv)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sb1905&repository=ha-ble-adv)
 
 Once the repository is added, you need to restart Home Assistant so that it could be taken into account.
 
@@ -87,4 +89,6 @@ Future developments are tracked in [github feature requests](https://github.com/
 * [Advanced Customization Guide](https://github.com/NicoIIT/ha-ble-adv/wiki/Customization-Guide)
 * [Contributing Guide](CONTRIBUTING.md)
 
-
+## Credits
+* **Original integration:** [@NicoIIT](https://github.com/NicoIIT) – [ha-ble-adv](https://github.com/NicoIIT/ha-ble-adv), MIT licensed. This edition is based on its v2.2.14 release.
+* **SmartLight Pro support:** Sukru Batur ([@sb1905](https://github.com/sb1905)), with support from Claude.
