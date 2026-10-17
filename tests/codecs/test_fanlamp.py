@@ -954,6 +954,37 @@ class TestEncoderFanlampSets(_TestEncoderFullAll):
     """Fanlamp Encoder / Decoder Full ALL tests."""
 
 
+@pytest.mark.parametrize(
+    _TestEncoderFullAll.PARAM_NAMES,
+    [
+        # Second Light button (0x12) as Main light ON, full brightness, cold white
+        (
+            "lampsmart_pro_v2",
+            [False, [0x10, 0x00, 0x56]],
+            "sl_as_full_cold",
+            "0201191B03F0081000F14BA2E91F80042AE2CB21B0F0E464CD240015AD3317",
+            "cmd: 0x12, param: 0x00, args: [0,0,0]",
+            "id: 0x0027B399, index: 0, tx: 43, seed: 0xAD15",
+            "light_0: ['on', 'cold', 'warm'] / {'sub_type': 'cww', 'on': True, 'cold': 1.0, 'warm': 0.0}",
+        ),
+        # Same button with the default set: Second light ON
+        (
+            "lampsmart_pro_v2",
+            [False, [0x10, 0x00, 0x56]],
+            "default",
+            "0201191B03F0081000F14BA2E91F80042AE2CB21B0F0E464CD240015AD3317",
+            "cmd: 0x12, param: 0x00, args: [0,0,0]",
+            "id: 0x0027B399, index: 0, tx: 43, seed: 0xAD15",
+            "light_1: ['on'] / {'on': True}",
+        ),
+    ],
+)
+class TestEncoderFanlampSetsRevOnly(_TestEncoderFullAll):
+    """Fanlamp Encoder / Decoder translator sets, decoding only."""
+
+    _with_reverse = False
+
+
 def _get_cmd(codec: BleAdvCodec, buffer: str) -> BleAdvEncCmd:
     (enc_cmd, _) = codec.decode_adv(BleAdvAdvertisement(0xFF, bytes.fromhex(buffer.replace(".", ""))))
     assert enc_cmd is not None
