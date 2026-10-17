@@ -151,6 +151,32 @@ async def test_deduplicate_tx_count_seed(coord: BleAdvCoordinator) -> None:
     dev1.async_on_command.reset_mock()
 
 
+async def test_listener_translator_set(coord: BleAdvCoordinator) -> None:
+    """Test commands from a linked controller are decoded with that controller's translator set."""
+    codecs = _get_codecs()
+    cod1: BleAdvCodec = codecs["cod1"]
+    cod2: BleAdvCodec = codecs["cod2/a"]
+    coord.codecs = codecs
+    dev1 = _Device(coord, "dev1", "cod1", ["esp/test"])
+    dev1.add_listener("cod2/a", BleAdvConfig(2, 0, None, "tr_test"), True)
+    dev1.add_listener("cod2/a", BleAdvConfig(3, 0), True)
+    dev1.async_on_command = mock.AsyncMock()
+    coord.add_device(dev1)
+    assert dev1.listener_translator_set("cod1", "esp/test", BleAdvConfig(1, 1)) == BleAdvCodec.DEF_TRANS_NAME
+    assert dev1.listener_translator_set("cod2", "esp/test", BleAdvConfig(2, 0)) == "tr_test"
+    assert dev1.listener_translator_set("cod2", "esp/test", BleAdvConfig(3, 0)) == BleAdvCodec.DEF_TRANS_NAME
+    assert dev1.listener_translator_set("cod2", "esp/other", BleAdvConfig(2, 0)) == BleAdvCodec.DEF_TRANS_NAME
+    cod2.enc_to_ent.reset_mock()  # type: ignore[mock]
+    recv = BleAdvRecvItem(datetime.now(), cod2, set(), BleAdvConfig(2, 0), BleAdvEncCmd(0x10))
+    await coord._publish_to_devices("esp/test", recv)  # noqa: SLF001
+    cod2.enc_to_ent.assert_called_once_with(BleAdvEncCmd(0x20), "tr_test")  # type: ignore[mock]
+    dev1.async_on_command.assert_called_once_with([], False)
+    cod1.enc_to_ent.reset_mock()  # type: ignore[mock]
+    recv = BleAdvRecvItem(datetime.now(), cod1, set(), BleAdvConfig(1, 1), BleAdvEncCmd(0x10))
+    await coord._publish_to_devices("esp/test", recv)  # noqa: SLF001
+    cod1.enc_to_ent.assert_called_once_with(BleAdvEncCmd(0x20), BleAdvCodec.DEF_TRANS_NAME)  # type: ignore[mock]
+
+
 async def test_listening(coord: BleAdvCoordinator) -> None:
     """Test listening mode."""
     coord.codecs = _get_codecs()

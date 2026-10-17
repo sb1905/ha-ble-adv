@@ -94,6 +94,14 @@ class BleAdvBaseDevice:
                     match_found = True
         return True if match_found else None
 
+    def listener_translator_set(self, match_id: str, adapter_id: str, config: BleAdvConfig) -> str:
+        """Get the translator set of the listener matching the given adapter / config, defaulting to the device one."""
+        if adapter_id in self.adapter_ids:
+            for m_id, conf, _ in self._listeners:
+                if (match_id == m_id) and (config.id == conf.id) and (config.index == conf.index) and conf.translator_set is not None:
+                    return conf.translator_set
+        return self.translator_set
+
     async def async_on_enc_cmd(self, enc_cmd: BleAdvEncCmd) -> None:
         """Call on matching command received."""
 
@@ -301,7 +309,8 @@ class BleAdvCoordinator:
                         or (recv.conf.seed != device.prev_seed)  # Seed different from last one recv
                     ):
                         await device.async_on_enc_cmd(cons_cmd)
-                        await device.async_on_command(recv.codec.enc_to_ent(cons_cmd, device.translator_set), not ct)
+                        tr_set = device.listener_translator_set(recv.codec.match_id, adapter_id, recv.conf)
+                        await device.async_on_command(recv.codec.enc_to_ent(cons_cmd, tr_set), not ct)
                     else:
                         self._add_diag("Ignored as duplicated TX Count or Seed")
                 device.prev_tx_count = recv.conf.tx_count
