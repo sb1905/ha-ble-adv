@@ -957,25 +957,43 @@ class TestEncoderFanlampSets(_TestEncoderFullAll):
 @pytest.mark.parametrize(
     _TestEncoderFullAll.PARAM_NAMES,
     [
-        # Second Light button (0x12) as Main light ON, full brightness, cold white
+        # Second Light button as Main light ON, full brightness, cold white (real remote captures, alternating 0x12 / 0x13)
         (
             "lampsmart_pro_v2",
-            [False, [0x10, 0x00, 0x56]],
+            [False, [0x10, 0x80, 0x00]],
             "sl_as_full_cold",
-            "0201191B03F0081000F14BA2E91F80042AE2CB21B0F0E464CD240015AD3317",
+            "0201021B03F0081080932EBA52EED58294A168F467F86570E280896202775C",
             "cmd: 0x12, param: 0x00, args: [0,0,0]",
-            "id: 0x0027B399, index: 0, tx: 43, seed: 0xAD15",
+            "id: 0xD527B399, index: 0, tx: 61, seed: 0x0262",
             "light_0: ['on', 'cold', 'warm'] / {'sub_type': 'cww', 'on': True, 'cold': 1.0, 'warm': 0.0}",
         ),
-        # Same button with the default set: Second light ON
         (
             "lampsmart_pro_v2",
-            [False, [0x10, 0x00, 0x56]],
+            [False, [0x10, 0x80, 0x00]],
+            "sl_as_full_cold",
+            "0201021B03F0081080C5B9911021E252B1A750A378F665FA6772E060025F73",
+            "cmd: 0x13, param: 0x00, args: [0,0,0]",
+            "id: 0xD527B399, index: 0, tx: 60, seed: 0x0260",
+            "light_0: ['on', 'cold', 'warm'] / {'sub_type': 'cww', 'on': True, 'cold': 1.0, 'warm': 0.0}",
+        ),
+        # Same button with the default set: Second light ON / OFF
+        (
+            "lampsmart_pro_v2",
+            [False, [0x10, 0x80, 0x00]],
             "default",
-            "0201191B03F0081000F14BA2E91F80042AE2CB21B0F0E464CD240015AD3317",
+            "0201021B03F0081080932EBA52EED58294A168F467F86570E280896202775C",
             "cmd: 0x12, param: 0x00, args: [0,0,0]",
-            "id: 0x0027B399, index: 0, tx: 43, seed: 0xAD15",
+            "id: 0xD527B399, index: 0, tx: 61, seed: 0x0262",
             "light_1: ['on'] / {'on': True}",
+        ),
+        (
+            "lampsmart_pro_v2",
+            [False, [0x10, 0x80, 0x00]],
+            "default",
+            "0201021B03F0081080C5B9911021E252B1A750A378F665FA6772E060025F73",
+            "cmd: 0x13, param: 0x00, args: [0,0,0]",
+            "id: 0xD527B399, index: 0, tx: 60, seed: 0x0260",
+            "light_1: ['on'] / {'on': False}",
         ),
     ],
 )

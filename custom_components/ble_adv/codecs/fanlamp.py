@@ -76,9 +76,15 @@ class FanLampEncoder(BleAdvCodec):
         nm_as_sl.replace(Trans(LightCmd(1).act(ATTR_ON, ATTR_CMD_TOGGLE), EncCmd(0x23)))
         self.add_translator_set("nm_as_second_light", nm_as_sl)
 
-        # Some remotes use the second light button (0x12) to switch the main light on at full brightness, cold white
-        sl_as_full_cold = TranslatorSet(translators[:]).delete(BleAdvEncCmd(0x12))
-        sl_as_full_cold.add_translators([Trans(CTLightCmd().act(ATTR_ON, True).act(ATTR_COLD, 1.0).act(ATTR_WARM, 0.0), EncCmd(0x12)).no_direct()])
+        # Some remotes use the second light button to switch the main light on at full brightness, cold white.
+        # The remote alternates between 0x12 and 0x13 on each press, so both are mapped.
+        sl_as_full_cold = TranslatorSet(translators[:]).delete(BleAdvEncCmd(0x12)).delete(BleAdvEncCmd(0x13))
+        sl_as_full_cold.add_translators(
+            [
+                Trans(CTLightCmd().act(ATTR_ON, True).act(ATTR_COLD, 1.0).act(ATTR_WARM, 0.0), EncCmd(0x12)).no_direct(),
+                Trans(CTLightCmd().act(ATTR_ON, True).act(ATTR_COLD, 1.0).act(ATTR_WARM, 0.0), EncCmd(0x13)).no_direct(),
+            ]
+        )
         self.add_translator_set("sl_as_full_cold", sl_as_full_cold)
         return self
 
