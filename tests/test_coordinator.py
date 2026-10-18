@@ -2,11 +2,12 @@
 
 # ruff: noqa: S101
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest import mock
 
 from ble_adv.adapters import BleAdvQueueItem
-from ble_adv.codecs.models import BleAdvAdvertisement, BleAdvCodec, BleAdvConfig, BleAdvEncCmd
+from ble_adv.codecs.const import ATTR_CMD, ATTR_CMD_BR_UP, ATTR_STEP
+from ble_adv.codecs.models import BleAdvAdvertisement, BleAdvCodec, BleAdvConfig, BleAdvEncCmd, BleAdvEntAttr
 from ble_adv.const import CONF_ADAPTER_ID, CONF_DEVICE_QUEUE, CONF_DURATION, CONF_INTERVAL, CONF_RAW, CONF_REPEAT
 from ble_adv.coordinator import BleAdvBaseDevice, BleAdvCoordinator, BleAdvRecvItem
 from homeassistant.core import HomeAssistant
@@ -175,6 +176,39 @@ async def test_listener_translator_set(coord: BleAdvCoordinator) -> None:
     recv = BleAdvRecvItem(datetime.now(), cod1, set(), BleAdvConfig(1, 1), BleAdvEncCmd(0x10))
     await coord._publish_to_devices("esp/test", recv)  # noqa: SLF001
     cod1.enc_to_ent.assert_called_once_with(BleAdvEncCmd(0x20), BleAdvCodec.DEF_TRANS_NAME)  # type: ignore[mock]
+
+
+async def test_echo_from_other_format(coord: BleAdvCoordinator) -> None:
+    """Test a change received in two formats from the same remote press is applied only once."""
+    codecs = _get_codecs()
+    cod1: BleAdvCodec = codecs["cod1"]
+    cod2: BleAdvCodec = codecs["cod2/a"]
+    coord.codecs = codecs
+    dev1 = _Device(coord, "dev1", "cod1", ["esp/test"])
+    dev1.add_listener("cod1", BleAdvConfig(1, 0), True)
+    dev1.add_listener("cod2/a", BleAdvConfig(2, 0), True)
+    dev1.async_on_command = mock.AsyncMock()
+    coord.add_device(dev1)
+    br_up = [BleAdvEntAttr([ATTR_CMD], {ATTR_CMD: ATTR_CMD_BR_UP, ATTR_STEP: 0.1}, "light", 0)]
+    t0 = datetime.now()
+    # Direct checks
+    assert not dev1.is_echo(("cod1", 1, 0), br_up, t0)
+    assert dev1.is_echo(("cod2", 2, 0), br_up, t0 + timedelta(milliseconds=100))  # same press, other format
+    assert not dev1.is_echo(("cod1", 1, 0), br_up, t0 + timedelta(milliseconds=200))  # same source: new press
+    assert not dev1.is_echo(("cod2", 2, 0), br_up, t0 + timedelta(seconds=1))  # too late: new press
+    assert not dev1.is_echo(("cod1", 1, 0), [], t0 + timedelta(seconds=1))  # nothing to apply
+    # Through the coordinator: both formats of one press, only the first is applied
+    dev1._last_change = None  # noqa: SLF001
+    cod1.enc_to_ent = mock.MagicMock(return_value=br_up)  # type: ignore[method-assign]
+    cod2.enc_to_ent = mock.MagicMock(return_value=br_up)  # type: ignore[method-assign]
+    conf1 = BleAdvConfig(1, 0)
+    conf1.tx_count = 5
+    await coord._publish_to_devices("esp/test", BleAdvRecvItem(datetime.now(), cod1, set(), conf1, BleAdvEncCmd(0x10)))  # noqa: SLF001
+    conf2 = BleAdvConfig(2, 0)
+    conf2.tx_count = 5  # same tx count as the other format: must not be dropped as a duplicate
+    await coord._publish_to_devices("esp/test", BleAdvRecvItem(datetime.now(), cod2, set(), conf2, BleAdvEncCmd(0x10)))  # noqa: SLF001
+    dev1.async_on_command.assert_called_once_with(br_up, False)
+    cod2.enc_to_ent.assert_called_once()
 
 
 async def test_listening(coord: BleAdvCoordinator) -> None:

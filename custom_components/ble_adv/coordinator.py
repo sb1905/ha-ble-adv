@@ -57,6 +57,8 @@ class BleAdvBaseDevice:
         self.prev_cmd: BleAdvEncCmd | None = None
         self.prev_tx_count: int = 0
         self.prev_seed: int = 0
+        self.prev_source: tuple[str, int, int] | None = None
+        self._last_change: tuple[tuple[str, int, int], str, datetime] | None = None
 
     @property
     def available(self) -> bool:
@@ -93,6 +95,24 @@ class BleAdvBaseDevice:
                         return False
                     match_found = True
         return True if match_found else None
+
+    ECHO_WINDOW = timedelta(milliseconds=500)
+
+    def is_echo(self, source: tuple[str, int, int], ent_attrs: list[BleAdvEntAttr], now: datetime) -> bool:
+        """Check if the same change was just received from another source.
+
+        Some physical remotes send each button press in several formats at the same time (e.g. Lamp Smart Pro and 0xFFF0).
+        The change must only be applied once, or relative changes (brightness +/-) would be applied twice.
+        """
+        if not ent_attrs:
+            return False
+        change = repr(ent_attrs)
+        if self._last_change is not None:
+            prev_source, prev_change, prev_time = self._last_change
+            if prev_source != source and prev_change == change and now - prev_time < self.ECHO_WINDOW:
+                return True
+        self._last_change = (source, change, now)
+        return False
 
     def listener_translator_set(self, match_id: str, adapter_id: str, config: BleAdvConfig) -> str:
         """Get the translator set of the listener matching the given adapter / config, defaulting to the device one."""
@@ -302,19 +322,26 @@ class BleAdvCoordinator:
         for device in self._devices:
             if device.unique_id not in recv.pub_devices and (ct := device.match(recv.codec.match_id, adapter_id, recv.conf)) is not None:
                 cons_cmd = copy(recv.enc_cmd)  # work on a copy to avoid the alteration of the command
+                source = (recv.codec.match_id, recv.conf.id, recv.conf.index)
                 if (cons_cmd := recv.codec.consolidate(cons_cmd, device.prev_cmd)) is not None:
                     if (
                         ((recv.conf.tx_count == 0) and (recv.conf.seed == 0))  # TX Count AND Seed not setup: always valid
                         or (recv.conf.tx_count != device.prev_tx_count)  # TX Count different from last one recv
                         or (recv.conf.seed != device.prev_seed)  # Seed different from last one recv
+                        or (source != device.prev_source)  # Received from another controller / format
                     ):
-                        await device.async_on_enc_cmd(cons_cmd)
                         tr_set = device.listener_translator_set(recv.codec.match_id, adapter_id, recv.conf)
-                        await device.async_on_command(recv.codec.enc_to_ent(cons_cmd, tr_set), not ct)
+                        ent_attrs = recv.codec.enc_to_ent(cons_cmd, tr_set)
+                        if device.is_echo(source, ent_attrs, datetime.now()):
+                            self._add_diag("Ignored as same change just received in another format")
+                        else:
+                            await device.async_on_enc_cmd(cons_cmd)
+                            await device.async_on_command(ent_attrs, not ct)
                     else:
                         self._add_diag("Ignored as duplicated TX Count or Seed")
                 device.prev_tx_count = recv.conf.tx_count
                 device.prev_seed = recv.conf.seed
+                device.prev_source = source
                 device.prev_cmd = recv.enc_cmd
                 recv.pub_devices.add(device.unique_id)
 
