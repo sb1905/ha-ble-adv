@@ -364,7 +364,8 @@
         "no_nm": "No Night Mode",
         "nm_as_effect": "Night Mode as Effect",
         "nm_as_second_light": "Night Mode as Second Light",
-        "sl_as_full_cold": "Second Light button as Full Brightness Cold White"
+        "sl_as_full_cold": "Second Light button as Full Brightness Cold White",
+        "br_after_ct": "Re-send Brightness after Color Temperature"
       }
     }
   },
